@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ video.title }} — MIX</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background-color: #f4f5f7; color: #333; }
+        a { text-decoration: none; color: inherit; }
+
+        header { background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 50px; }
+        .logo { font-size: 22px; font-weight: bold; color: #ff3b30; font-style: italic; }
+        .btn-add { background: #e50914; color: #fff; padding: 6px 12px; font-size: 13px; border-radius: 3px; font-weight: bold; }
+
+        .container { max-width: 1000px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .video-player { width: 100%; max-height: 500px; background: #000; border-radius: 4px; }
+        
+        .video-info { margin-top: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .video-title { font-size: 20px; font-weight: bold; color: #111; margin-bottom: 8px; }
+        .video-meta { font-size: 13px; color: #666; display: flex; gap: 15px; }
+
+        .desc-box { margin: 15px 0; font-size: 14px; color: #444; line-height: 1.5; white-space: pre-line; }
+
+        /* Комментарии */
+        .comments-section { margin-top: 25px; }
+        .comments-section h3 { font-size: 16px; margin-bottom: 15px; }
+        .comment-form textarea { width: 100%; height: 70px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; font-size: 13px; }
+        .comment-form button { background: #0066cc; color: #fff; border: none; padding: 8px 16px; border-radius: 3px; cursor: pointer; font-size: 13px; }
+        
+        .comment-list { margin-top: 20px; list-style: none; }
+        .comment-item { padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+        .comment-user { font-weight: bold; color: #0066cc; margin-bottom: 3px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="{% url 'index' %}" class="logo">MIX</a>
+    <div>
+        <a href="{% url 'upload_video' %}" class="btn-add">Добавить видео</a>
+    </div>
+</header>
+
+<div class="container">
+    <video class="video-player" controls autoplay>
+        <source src="{{ video.video_file.url }}" type="video/mp4">
+        Ваш браузер не поддерживает видео.
+    </video>
+
+    <div class="video-info">
+        <h1 class="video-title">{{ video.title }}</h1>
+        <div class="video-meta">
+            <span>Канал: <strong>{{ video.channel.name }}</strong></span>
+            <span><i class="fa fa-eye"></i> {{ video.views }} просмотров</span>
+            <span>Дата: {{ video.created_at|date:"d.m.Y H:i" }}</span>
+        </div>
+    </div>
+
+    <div class="desc-box">
+        {{ video.description|default:"Описание отсутствует." }}
+    </div>
+
+    <div class="comments-section">
+        <h3>Комментарии</h3>
+
+        {% if user.is_authenticated %}
+            <form class="comment-form" method="POST">
+                {% csrf_token %}
+                <textarea name="text" placeholder="Оставьте комментарий..." required></textarea>
+                <button type="submit">Отправить</button>
+            </form>
+        {% else %}
+            <p style="font-size: 13px; color: #777;"><a href="/admin/login/" style="color: #0066cc;">Войдите</a>, чтобы оставить комментарий.</p>
+        {% endif %}
+
+        <ul class="comment-list">
+            {% for comment in comments %}
+                <li class="comment-item">
+                    <div class="comment-user">{{ comment.user.username }}</div>
+                    <div>{{ comment.text }}</div>
+                </li>
+            {% empty %}
+                <li class="comment-item" style="color: #888;">Комментариев пока нет. Будьте первым!</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>
