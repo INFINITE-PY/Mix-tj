@@ -14,23 +14,19 @@ def index(request):
     categories = Category.objects.all()
     channels = Channel.objects.all()[:5]
 
-    # 1. Полнофункциональный поиск (Title + Description)
     if query:
         videos = videos.filter(
             Q(title__icontains=query) | Q(description__icontains=query)
         )
 
-    # 2. Фильтрация по категориям
     if category_slug:
         videos = videos.filter(category__slug=category_slug)
 
-    # 3. Фильтрация по вкладкам (Популярное / ТОП дня / Новинки)
     if filter_type == 'popular':
         videos = videos.order_by('-views')
     elif filter_type == 'new':
         videos = videos.order_by('-created_at')
 
-    # Видео для сайдбара "Новинки"
     sidebar_new_videos = Video.objects.order_by('-created_at')[:4]
 
     context = {
