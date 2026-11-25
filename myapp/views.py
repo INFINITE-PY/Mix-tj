@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
+from django.utils import timezone
+from datetime import timedelta
 from .models import Video, Category, Channel, Comment
 from django.contrib.auth import logout
 from django.contrib.auth import login
@@ -22,12 +24,18 @@ def index(request):
     if category_slug:
         videos = videos.filter(category__slug=category_slug)
 
-    if filter_type == 'popular':
-        videos = videos.order_by('-views')
+    now = timezone.now()
+    if filter_type == 'day':
+        videos = videos.filter(created_at__gte=now - timedelta(days=1)).order_by('-views')
+    elif filter_type == 'week':
+        videos = videos.filter(created_at__gte=now - timedelta(days=7)).order_by('-views')
     elif filter_type == 'new':
         videos = videos.order_by('-created_at')
+    else:
+        filter_type = 'popular'
+        videos = videos.order_by('-views')
 
-    sidebar_new_videos = Video.objects.order_by('-created_at')[:4]
+    sidebar_new_videos = Video.objects.order_by('-created_at')[:5]
 
     context = {
         'videos': videos,
@@ -35,6 +43,7 @@ def index(request):
         'channels': channels,
         'query': query,
         'filter_type': filter_type,
+        'active_category': category_slug,
         'sidebar_new_videos': sidebar_new_videos
     }
     return render(request, 'youtube/index.html', context)
@@ -46,13 +55,28 @@ def watch(request, id):
     video.save()
 
     if request.method == 'POST' and request.user.is_authenticated:
+        if request.POST.get('like') == '1':
+            video.likes += 1
+            video.save(update_fields=['likes'])
+            return redirect('watch', id=video.id)
         text = request.POST.get('text')
         if text:
             Comment.objects.create(video=video, user=request.user, text=text)
             return redirect('watch', id=video.id)
 
     comments = video.comments.all().order_by('-created_at')
-    return render(request, 'youtube/watch.html', {'video': video, 'comments': comments})
+    related = (
+        Video.objects.exclude(id=video.id)
+        .filter(Q(category=video.category) | Q(channel=video.channel))
+        .order_by('-views')[:6]
+    )
+    if not related:
+        related = Video.objects.exclude(id=video.id).order_by('-views')[:6]
+    return render(request, 'youtube/watch.html', {
+        'video': video,
+        'comments': comments,
+        'related': related,
+    })
 
 
 def upload_video(request):
@@ -62,12 +86,18 @@ def upload_video(request):
     categories = Category.objects.all()
 
     if request.method == 'POST':
-        title = request.POST.get('title')
+        title = (request.POST.get('title') or '').strip()
         description = request.POST.get('description')
-        duration = request.POST.get('duration', '00:00')
+        duration = request.POST.get('duration', '00:00') or '00:00'
         category_id = request.POST.get('category')
         video_file = request.FILES.get('video')
         thumbnail = request.FILES.get('thumbnail')
+
+        if not title or not video_file:
+            return render(request, 'youtube/upload.html', {
+                'categories': categories,
+                'error': 'Укажите название видео и выберите файл.',
+            })
 
         channel, _ = Channel.objects.get_or_create(user=request.user, defaults={'name': request.user.username})
         category = Category.objects.filter(id=category_id).first()

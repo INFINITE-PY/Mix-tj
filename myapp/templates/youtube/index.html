@@ -1,170 +1,124 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>MIX Video</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { background-color: #f4f5f7; color: #333; }
-        a { text-decoration: none; color: inherit; }
+{% extends "youtube/base.html" %}
 
-        /* Верхняя тёмная панель */
-        header { background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 50px; }
-        .header-left { display: flex; align-items: center; gap: 20px; }
-        .logo { font-size: 22px; font-weight: bold; color: #ff3b30; font-style: italic; }
-        
-        .search-form { display: flex; background: #333; border-radius: 3px; overflow: hidden; width: 350px; }
-        .search-form input { background: transparent; border: none; padding: 6px 12px; color: #fff; flex: 1; outline: none; }
-        .search-form button { background: #444; border: none; color: #aaa; padding: 0 12px; cursor: pointer; }
+{% block title %}{% if query %}{{ query }} — поиск{% else %}MIX — Главная{% endif %}{% endblock %}
 
-        .top-nav { display: flex; gap: 15px; font-size: 13px; align-items: center; }
-        .top-nav a:hover { color: #ff3b30; }
+{% block layout %}
+<div class="layout">
 
-        .header-right { display: flex; gap: 15px; align-items: center; }
-        .btn-add { background: #e50914; color: #fff; padding: 6px 12px; font-size: 13px; border-radius: 3px; font-weight: bold; }
-
-        /* Основной Layout */
-        .main-wrapper { display: flex; max-width: 1400px; margin: 0 auto; padding: 15px; gap: 20px; }
-
-        /* Боковое меню */
-        .sidebar-left { width: 180px; flex-shrink: 0; }
-        .menu-title { font-size: 12px; font-weight: bold; color: #0066cc; margin-bottom: 10px; }
-        .cat-list { list-style: none; margin-bottom: 20px; }
-        .cat-list li { margin-bottom: 8px; font-size: 12px; text-transform: uppercase; color: #555; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-        .cat-list li i { font-size: 14px; width: 16px; color: #777; }
-        .cat-list li a:hover { color: #ff3b30; }
-        .all-cats { color: #e50914; font-weight: bold; font-size: 12px; }
-
-        /* Центральный контент */
-        .content { flex: 1; background: #fff; border-radius: 4px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-
-        /* Вкладки сортировки */
-        .tabs { display: flex; gap: 20px; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; margin-bottom: 15px; font-size: 14px; font-weight: bold; }
-        .tabs a { color: #0066cc; }
-        .tabs a.active { color: #e50914; border-bottom: 2px solid #e50914; padding-bottom: 8px; }
-
-        /* Сетка видео */
-        .video-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-        .video-card { font-size: 12px; }
-        .thumb-container { position: relative; width: 100%; height: 110px; background: #000; border-radius: 3px; overflow: hidden; }
-        .thumb-container img { width: 100%; height: 100%; object-fit: cover; }
-        .duration { position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.8); color: #fff; font-size: 10px; padding: 2px 4px; border-radius: 2px; }
-        
-        .video-title { font-weight: bold; color: #0066cc; margin: 6px 0 4px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 32px; }
-        .video-meta { color: #888; font-size: 11px; }
-
-        /* Правая колонка (Реклама / Новинки) */
-        .sidebar-right { width: 250px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; }
-        .ad-box { background: #fff; padding: 10px; border-radius: 4px; font-size: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .ad-banner { background: #f8c43a; padding: 8px; font-weight: bold; display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .side-title { font-size: 14px; font-weight: bold; color: #0066cc; margin-bottom: 10px; }
-    </style>
-</head>
-<body>
-
-<!-- Верхний навбар -->
-<header>
-    <div class="header-left">
-        <a href="{% url 'index' %}" class="logo">MIX</a>
-        <form class="search-form" action="{% url 'index' %}" method="GET">
-            <input type="text" name="q" placeholder="Поиск..." value="{{ query }}">
-            <button type="submit"><i class="fa fa-search"></i></button>
-        </form>
-    </div>
-
-    <nav class="top-nav">
-        <a href="#"><i class="fa fa-home"></i></a>
-        <a href="#">Фильмы</a>
-        <a href="#">Сериалы</a>
-        <a href="#">Телешоу</a>
-        <a href="#">Спорт</a>
-        <a href="#">Мультфильмы</a>
-        <a href="#">Музыка</a>
-    </nav>
-
-    <div class="header-right">
-        <a href="{% url 'upload_video' %}" class="btn-add">Добавить видео</a>
-    {% if user.is_authenticated %}
-        <span style="font-size: 13px; margin-right: 10px;"><i class="fa fa-user"></i> {{ user.username }}</span>
-        <a href="{% url 'logout' %}" style="font-size: 13px; color: #ff3b30;"><i class="fa fa-sign-out-alt"></i> Выйти</a>
-    {% else %}
-        <a href="{% url 'login' %}" style="font-size: 13px;"><i class="fa fa-user"></i> Войти</a>
-    {% endif %}
-    </div>
-</header>
-
-<div class="main-wrapper">
-    <!-- Левое меню Категорий -->
-<aside class="sidebar-left">
-    <div class="menu-title">Категории</div>
-    <ul class="cat-list">
-        {% for cat in categories %}
-            <li>
-                <i class="fa fa-folder"></i> 
-                <a href="?category={{ cat.slug }}">{{ cat.name|upper }}</a>
-            </li>
-        {% empty %}
-            <li style="font-size: 11px; color: #999;">Категорий нет</li>
-        {% endfor %}
-    </ul>
-    <a href="{% url 'index' %}" class="all-cats">Все категории &#9654;</a>
-</aside>
-
-    <!-- Главный блок с видео -->
-    <main class="content">
-        <!-- Вкладки фильтрации -->
-        <div class="tabs">
-            <a href="?filter=popular" class="{% if filter_type == 'popular' %}active{% endif %}">Популярное</a>
-            <a href="?filter=day">ТОП дня</a>
-            <a href="?filter=week">ТОП недели</a>
-            <a href="?filter=new" class="{% if filter_type == 'new' %}active{% endif %}">За все время</a>
+    <!-- Левое меню -->
+    <aside class="sidebar">
+        <div class="sidebar-block">
+            <div class="sidebar-title">Категории</div>
+            <ul>
+                {% for cat in categories %}
+                    <li>
+                        <a href="?category={{ cat.slug }}"
+                           class="menu-item {% if active_category == cat.slug %}active{% endif %}">
+                            <i class="fa-solid fa-folder"></i> {{ cat.name }}
+                        </a>
+                    </li>
+                {% empty %}
+                    <li><span class="menu-item" style="color:var(--text-dim)"><i class="fa-regular fa-folder"></i> Пусто</span></li>
+                {% endfor %}
+            </ul>
+            <a href="{% url 'index' %}" class="menu-item all"><i class="fa-solid fa-border-all"></i> Все видео</a>
         </div>
 
-        {% if query %}
-            <p style="margin-bottom: 15px; font-size: 13px;">Результаты поиска по запросу: <strong>"{{ query }}"</strong></p>
-        {% endif %}
+        <div class="sidebar-block">
+            <div class="sidebar-title">Разделы</div>
+            <a href="?filter=popular" class="menu-item"><i class="fa-solid fa-fire"></i> Популярное</a>
+            <a href="?filter=day" class="menu-item"><i class="fa-solid fa-chart-simple"></i> Тренды дня</a>
+            <a href="?filter=week" class="menu-item"><i class="fa-solid fa-calendar-week"></i> Тренды недели</a>
+            <a href="?filter=new" class="menu-item"><i class="fa-solid fa-clock-rotate-left"></i> Свежее</a>
+        </div>
+    </aside>
 
-        <!-- Сетка карточек -->
+    <!-- Контент -->
+    <main class="content">
+        <div class="tabs">
+            <a href="?filter=popular" class="tab {% if filter_type == 'popular' %}active{% endif %}">
+                <i class="fa-solid fa-fire"></i> Популярное
+            </a>
+            <a href="?filter=day" class="tab {% if filter_type == 'day' %}active{% endif %}">Тренды дня</a>
+            <a href="?filter=week" class="tab {% if filter_type == 'week' %}active{% endif %}">Тренды недели</a>
+            <a href="?filter=new" class="tab {% if filter_type == 'new' %}active{% endif %}">
+                <i class="fa-solid fa-star"></i> Свежее
+            </a>
+        </div>
+
+        <div class="section-head">
+            <h2>
+                {% if query %}
+                    Результаты поиска: «{{ query }}»
+                {% elif active_category %}
+                    Категория
+                {% else %}
+                    Рекомендации
+                {% endif %}
+            </h2>
+            <span style="color:var(--text-dim); font-size:13px;">{{ videos|length }} видео</span>
+        </div>
+
         <div class="video-grid">
             {% for video in videos %}
-                <div class="video-card">
-                    <div class="thumb-container">
-                        <a href="{% url 'watch' video.id %}">
-                            {% if video.thumbnail %}
-                                <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}">
-                            {% else %}
-                                <div style="width:100%; height:100%; background:#444;"></div>
-                            {% endif %}
-                            <span class="duration">{{ video.duration }}</span>
-                        </a>
+                <a href="{% url 'watch' video.id %}" class="video-card">
+                    <div class="thumb">
+                        {% if video.thumbnail %}
+                            <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" loading="lazy">
+                        {% else %}
+                            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2b1055,#7597de);color:#fff;font-size:30px;">
+                                <i class="fa-solid fa-play"></i>
+                            </div>
+                        {% endif %}
+                        <div class="play"><span><i class="fa-solid fa-play"></i></span></div>
+                        <span class="duration">{{ video.duration }}</span>
                     </div>
-                    <a href="{% url 'watch' video.id %}" class="video-title">{{ video.title }}</a>
-                    <div class="video-meta">
-                        {{ video.channel.name }} / {{ video.created_at|date:"d.m.Y" }}<br>
-                        <i class="fa fa-eye"></i> {{ video.views }} / <i class="fa fa-thumbs-up"></i> {{ video.likes }}
+                    <div class="info">
+                        <span class="avatar">{{ video.channel.initial }}</span>
+                        <div class="meta">
+                            <div class="title">{{ video.title }}</div>
+                            <div class="channel">{{ video.channel.name }}</div>
+                            <div class="stats">{{ video.views_label }} · {{ video.created_at|date:"d M Y" }}</div>
+                        </div>
                     </div>
-                </div>
+                </a>
             {% empty %}
-                <p style="grid-column: span 4; color: #777;">Видео не найдены.</p>
+                <div class="empty">
+                    <i class="fa-solid fa-video-slash"></i>
+                    <p>Видео не найдены. Попробуйте изменить запрос или фильтр.</p>
+                </div>
             {% endfor %}
         </div>
     </main>
 
     <!-- Правый сайдбар -->
-        <aside class="sidebar-right">
-            <!-- Блок "Новинки" -->
-            <div class="ad-box">
-                <div class="side-title">★ Новинки</div>
-                {% for n_video in sidebar_new_videos %}
-                    <div style="margin-bottom: 10px; font-size: 12px;">
-                        <a href="{% url 'watch' n_video.id %}" style="color:#0066cc; font-weight:bold;">{{ n_video.title }}</a>
-                        <div style="color: #888; font-size: 10px;">Просмотров: {{ n_video.views }}</div>
+    <aside class="side-right">
+        <div class="side-card">
+            <h3><i class="fa-solid fa-bolt"></i> Новинки</h3>
+            {% for n_video in sidebar_new_videos %}
+                <a href="{% url 'watch' n_video.id %}" class="mini-card">
+                    <div class="mini-thumb">
+                        {% if n_video.thumbnail %}
+                            <img src="{{ n_video.thumbnail.url }}" alt="{{ n_video.title }}" loading="lazy">
+                        {% endif %}
+                        <span class="duration">{{ n_video.duration }}</span>
                     </div>
-                {% endfor %}
-            </div>
-        </aside>
-</div>
+                    <div class="mini-info">
+                        <div class="mini-title">{{ n_video.title }}</div>
+                        <div class="mini-stats">{{ n_video.channel.name }}<br>{{ n_video.views_label }}</div>
+                    </div>
+                </a>
+            {% empty %}
+                <p style="color:var(--text-dim);font-size:13px;">Пока пусто</p>
+            {% endfor %}
+        </div>
 
-</body>
-</html>
+        <div class="side-card promo">
+            <h3><i class="fa-solid fa-clapperboard"></i> Свой канал</h3>
+            <p>Загружайте видео, собирайте просмотры и лайки — это займёт минуту.</p>
+            <a href="{% url 'upload_video' %}" class="btn btn-primary btn-block btn-lg">Загрузить видео</a>
+        </div>
+    </aside>
+
+</div>
+{% endblock %}

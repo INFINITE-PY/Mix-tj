@@ -1,54 +1,39 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Вход</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { background-color: #f4f5f7; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        
-        .login-card { background: #fff; padding: 30px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 340px; }
-        .login-card h2 { margin-bottom: 20px; font-size: 20px; color: #111; text-align: center; border-bottom: 2px solid #e50914; padding-bottom: 8px; }
-        
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #444; }
-        .form-group input { width: 100%; padding: 8px; font-size: 13px; border: 1px solid #ccc; border-radius: 3px; outline: none; }
-        .form-group input:focus { border-color: #e50914; }
-        
-        .error-msg { background: #ffe6e6; color: #d8000c; padding: 8px; font-size: 12px; border-radius: 3px; margin-bottom: 15px; text-align: center; }
-        
-        .btn-submit { width: 100%; background: #e50914; color: #fff; border: none; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 3px; cursor: pointer; }
-        .btn-submit:hover { background: #cc0000; }
-        
-        .reg-link { display: block; text-align: center; margin-top: 15px; font-size: 13px; color: #0066cc; text-decoration: none; }
-        .reg-link:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
+{% extends "youtube/base.html" %}
 
-<div class="login-card">
-    <h2>Авторизация</h2>
+{% block title %}Вход — MIX{% endblock %}
 
-    {% if form.errors %}
-        <div class="error-msg">Неверное имя пользователя или пароль.</div>
-    {% endif %}
+{% block layout %}
+<div class="auth-wrap">
+    <div class="auth-card">
+        <h2 style="text-align:center;">Вход в <span style="color:var(--accent);">MIX</span></h2>
+        <p class="auth-sub" style="text-align:center;">С возвращением! Продолжайте смотреть.</p>
 
-    <form method="POST">
-        {% csrf_token %}
-        <div class="form-group">
-            <label>Имя пользователя</label>
-            <input type="text" name="username" required autocomplete="username">
+        {% if form.errors %}
+            <div class="alert-error"><i class="fa-solid fa-circle-exclamation"></i> Неверное имя пользователя или пароль.</div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="field">
+                <label>Имя пользователя</label>
+                <input type="text" name="username" placeholder="Ваш логин" required autocomplete="username">
+            </div>
+
+            <div class="field">
+                <label>Пароль</label>
+                <input type="password" name="password" placeholder="Ваш пароль" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                <i class="fa-solid fa-right-to-bracket"></i> Войти
+            </button>
+        </form>
+
+        <div class="auth-links">
+            Нет аккаунта? <a href="{% url 'register' %}">Зарегистрироваться</a><br><br>
+            <a href="{% url 'index' %}"><i class="fa-solid fa-arrow-left"></i> На главную</a>
         </div>
-        <div class="form-group">
-            <label>Пароль</label>
-            <input type="password" name="password" required autocomplete="current-password">
-        </div>
-        <button type="submit" class="btn-submit">Войти</button>
-    </form>
-
-    <a href="{% url 'register' %}" class="reg-link">Нет аккаунта? Зарегистрироваться</a>
+    </div>
 </div>
-
-</body>
-</html>
+{% endblock %}

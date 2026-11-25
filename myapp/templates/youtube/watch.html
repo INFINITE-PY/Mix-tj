@@ -1,91 +1,112 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ video.title }} — MIX</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { background-color: #f4f5f7; color: #333; }
-        a { text-decoration: none; color: inherit; }
+{% extends "youtube/base.html" %}
 
-        header { background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 50px; }
-        .logo { font-size: 22px; font-weight: bold; color: #ff3b30; font-style: italic; }
-        .btn-add { background: #e50914; color: #fff; padding: 6px 12px; font-size: 13px; border-radius: 3px; font-weight: bold; }
+{% block title %}{{ video.title }} — MIX{% endblock %}
 
-        .container { max-width: 1000px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .video-player { width: 100%; max-height: 500px; background: #000; border-radius: 4px; }
-        
-        .video-info { margin-top: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-        .video-title { font-size: 20px; font-weight: bold; color: #111; margin-bottom: 8px; }
-        .video-meta { font-size: 13px; color: #666; display: flex; gap: 15px; }
+{% block layout %}
+<div class="watch-layout">
 
-        .desc-box { margin: 15px 0; font-size: 14px; color: #444; line-height: 1.5; white-space: pre-line; }
+    <!-- Основная часть -->
+    <div class="watch-main">
+        <div class="player-wrap">
+            <video controls autoplay preload="metadata" {% if video.thumbnail %}poster="{{ video.thumbnail.url }}"{% endif %}>
+                <source src="{{ video.video_file.url }}" type="video/mp4">
+                Ваш браузер не поддерживает видео.
+            </video>
+        </div>
 
-        /* Комментарии */
-        .comments-section { margin-top: 25px; }
-        .comments-section h3 { font-size: 16px; margin-bottom: 15px; }
-        .comment-form textarea { width: 100%; height: 70px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; font-size: 13px; }
-        .comment-form button { background: #0066cc; color: #fff; border: none; padding: 8px 16px; border-radius: 3px; cursor: pointer; font-size: 13px; }
-        
-        .comment-list { margin-top: 20px; list-style: none; }
-        .comment-item { padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-        .comment-user { font-weight: bold; color: #0066cc; margin-bottom: 3px; }
-    </style>
-</head>
-<body>
+        <h1 class="watch-title">{{ video.title }}</h1>
 
-<header>
-    <a href="{% url 'index' %}" class="logo">MIX</a>
-    <div>
-        <a href="{% url 'upload_video' %}" class="btn-add">Добавить видео</a>
-    </div>
-</header>
+        <div class="watch-bar">
+            <div class="channel-row">
+                <span class="avatar avatar-lg">{{ video.channel.initial }}</span>
+                <div>
+                    <div class="name">{{ video.channel.name }}</div>
+                    <div class="sub">{{ video.views_label }}</div>
+                </div>
+                <button class="btn btn-primary" style="margin-left:10px;" onclick="this.textContent='Вы подписаны ✓';this.classList.remove('btn-primary');this.classList.add('btn');">
+                    Подписаться
+                </button>
+            </div>
 
-<div class="container">
-    <video class="video-player" controls autoplay>
-        <source src="{{ video.video_file.url }}" type="video/mp4">
-        Ваш браузер не поддерживает видео.
-    </video>
+            <div class="actions">
+                <div class="pill split">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <button type="submit" name="like" value="1"><i class="fa-solid fa-thumbs-up"></i> {{ video.likes_label }}</button>
+                    </form>
+                    <span class="sep"></span>
+                    <button type="button" onclick="alert('Спасибо за оценку!')"><i class="fa-solid fa-thumbs-down"></i></button>
+                </div>
+                <button class="pill" onclick="navigator.clipboard?.writeText(location.href).then(()=>this.innerHTML='<i class=\'fa-solid fa-check\'></i> Скопировано')">
+                    <i class="fa-solid fa-share"></i> Поделиться
+                </button>
+                <button class="pill" onclick="alert('Спасибо, жалоба принята!')"><i class="fa-solid fa-flag"></i> Пожаловаться</button>
+            </div>
+        </div>
 
-    <div class="video-info">
-        <h1 class="video-title">{{ video.title }}</h1>
-        <div class="video-meta">
-            <span>Канал: <strong>{{ video.channel.name }}</strong></span>
-            <span><i class="fa fa-eye"></i> {{ video.views }} просмотров</span>
-            <span>Дата: {{ video.created_at|date:"d.m.Y H:i" }}</span>
+        <div class="desc-box">
+            <div class="desc-meta">{{ video.views_label }} · {{ video.created_at|date:"d M Y" }}{% if video.category %} · {{ video.category.name }}{% endif %}</div>
+            {{ video.description|default:"Описание отсутствует." }}
+        </div>
+
+        <!-- Комментарии -->
+        <div class="comments">
+            <h3><i class="fa-solid fa-comments" style="color:var(--accent)"></i> Комментарии ({{ comments|length }})</h3>
+
+            {% if user.is_authenticated %}
+                <form class="comment-form" method="POST">
+                    {% csrf_token %}
+                    <span class="avatar">{{ user.username|first|upper }}</span>
+                    <textarea name="text" placeholder="Введите комментарий..." required></textarea>
+                    <button type="submit" class="btn btn-primary" style="align-self:flex-end;">Отправить</button>
+                </form>
+            {% else %}
+                <p style="margin-bottom:20px;color:var(--text-dim);font-size:13.5px;">
+                    <a href="{% url 'login' %}" style="color:var(--blue);font-weight:600;">Войдите</a>, чтобы оставить комментарий.
+                </p>
+            {% endif %}
+
+            {% for comment in comments %}
+                <div class="comment">
+                    <span class="avatar">{{ comment.user.username|first|upper }}</span>
+                    <div class="body">
+                        <div class="head">
+                            <span class="user">{{ comment.user.username }}</span>
+                            <span class="time">{{ comment.created_at|date:"d M Y H:i" }}</span>
+                        </div>
+                        <div class="text">{{ comment.text }}</div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="comment-empty">Комментариев пока нет. Будьте первым!</div>
+            {% endfor %}
         </div>
     </div>
 
-    <div class="desc-box">
-        {{ video.description|default:"Описание отсутствует." }}
-    </div>
-
-    <div class="comments-section">
-        <h3>Комментарии</h3>
-
-        {% if user.is_authenticated %}
-            <form class="comment-form" method="POST">
-                {% csrf_token %}
-                <textarea name="text" placeholder="Оставьте комментарий..." required></textarea>
-                <button type="submit">Отправить</button>
-            </form>
-        {% else %}
-            <p style="font-size: 13px; color: #777;"><a href="/admin/login/" style="color: #0066cc;">Войдите</a>, чтобы оставить комментарий.</p>
-        {% endif %}
-
-        <ul class="comment-list">
-            {% for comment in comments %}
-                <li class="comment-item">
-                    <div class="comment-user">{{ comment.user.username }}</div>
-                    <div>{{ comment.text }}</div>
-                </li>
+    <!-- Похожие видео -->
+    <aside class="related-side">
+        <div class="side-card" style="padding:14px;">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:14px;display:flex;gap:7px;align-items:center;">
+                <i class="fa-solid fa-film" style="color:var(--accent)"></i> Похожие видео
+            </h3>
+            {% for r in related %}
+                <a href="{% url 'watch' r.id %}" class="related-card">
+                    <div class="related-thumb">
+                        {% if r.thumbnail %}
+                            <img src="{{ r.thumbnail.url }}" alt="{{ r.title }}" loading="lazy">
+                        {% endif %}
+                        <span class="duration">{{ r.duration }}</span>
+                    </div>
+                    <div class="related-info">
+                        <div class="related-title">{{ r.title }}</div>
+                        <div class="related-meta">{{ r.channel.name }}<br>{{ r.views_label }}</div>
+                    </div>
+                </a>
             {% empty %}
-                <li class="comment-item" style="color: #888;">Комментариев пока нет. Будьте первым!</li>
+                <p style="color:var(--text-dim);font-size:13px;">Похожих видео нет.</p>
             {% endfor %}
-        </ul>
-    </div>
-</div>
+        </div>
+    </aside>
 
-</body>
-</html>
+</div>
+{% endblock %}

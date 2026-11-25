@@ -1,81 +1,63 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Загрузка видео</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { background-color: #f4f5f7; color: #333; }
-        a { text-decoration: none; color: inherit; }
+{% extends "youtube/base.html" %}
 
-        header { background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 50px; }
-        .logo { font-size: 22px; font-weight: bold; color: #ff3b30; font-style: italic; }
+{% block title %}Загрузка видео — MIX{% endblock %}
 
-        .form-container { max-width: 600px; margin: 30px auto; background: #fff; padding: 25px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .form-container h2 { font-size: 18px; margin-bottom: 20px; color: #111; border-bottom: 2px solid #e50914; padding-bottom: 8px; }
+{% block layout %}
+<div class="auth-wrap">
+    <div class="auth-card wide">
+        <h2><i class="fa-solid fa-cloud-arrow-up" style="color:var(--accent)"></i> Загрузить новое видео</h2>
+        <p class="auth-sub">Заполните форму и опубликуйте ролик на своей странице.</p>
 
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #444; }
-        .form-group input[type="text"],
-        .form-group textarea,
-        .form-group select { width: 100%; padding: 8px; font-size: 13px; border: 1px solid #ccc; border-radius: 3px; outline: none; }
-        .form-group textarea { height: 100px; resize: vertical; }
+        {% if error %}
+            <div class="alert-error">{{ error }}</div>
+        {% endif %}
 
-        .btn-submit { background: #e50914; color: #fff; border: none; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 3px; cursor: pointer; }
-        .btn-submit:hover { background: #cc0000; }
-    </style>
-</head>
-<body>
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
 
-<header>
-    <a href="{% url 'index' %}" class="logo">MIX</a>
-</header>
+            <div class="field">
+                <label>Название видео *</label>
+                <input type="text" name="title" placeholder="Введите название ролика" required>
+            </div>
 
-<div class="form-container">
-    <h2>Загрузить новое видео</h2>
+            <div class="field">
+                <label>Категория</label>
+                <select name="category">
+                    <option value="">-- Выберите категорию --</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
+            <div class="field">
+                <label>Длительность (например, 01:45:29)</label>
+                <input type="text" name="duration" placeholder="00:00">
+            </div>
 
-        <div class="form-group">
-            <label>Название видео *</label>
-            <input type="text" name="title" placeholder="Введите название роли" required>
+            <div class="field">
+                <label>Описание</label>
+                <textarea name="description" placeholder="Расскажите о видео..."></textarea>
+            </div>
+
+            <div class="field">
+                <label>Файл видео (.mp4, .avi) *</label>
+                <input type="file" name="video" accept="video/*" required>
+            </div>
+
+            <div class="field">
+                <label>Обложка / Превью (.jpg, .png)</label>
+                <input type="file" name="thumbnail" accept="image/*">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                <i class="fa-solid fa-rocket"></i> Опубликовать
+            </button>
+        </form>
+
+        <div class="auth-links">
+            <a href="{% url 'index' %}"><i class="fa-solid fa-arrow-left"></i> Вернуться на главную</a>
         </div>
-
-        <div class="form-group">
-            <label>Категория</label>
-            <select name="category">
-                <option value="">-- Выберите категорию --</option>
-                {% for cat in categories %}
-                    <option value="{{ cat.id }}">{{ cat.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label>Длительность (например, 01:45:29)</label>
-            <input type="text" name="duration" placeholder="00:00">
-        </div>
-
-        <div class="form-group">
-            <label>Описание</label>
-            <textarea name="description" placeholder="Краткое описание видео..."></textarea>
-        </div>
-
-        <div class="form-group">
-            <label>Файл видео (.mp4, .avi) *</label>
-            <input type="file" name="video" accept="video/*" required>
-        </div>
-
-        <div class="form-group">
-            <label>Обложка / Превью (.jpg, .png)</label>
-            <input type="file" name="thumbnail" accept="image/*">
-        </div>
-
-        <button type="submit" class="btn-submit">Опубликовать</button>
-    </form>
+    </div>
 </div>
-
-</body>
-</html>
+{% endblock %}
